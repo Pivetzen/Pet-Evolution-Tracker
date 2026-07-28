@@ -44,6 +44,45 @@
       </div>
     </section>
 
+    <!-- CARD: Status da Caixinha de Areia (Apenas Gatos) -->
+    <section id="catLitterBoxSection" class="hidden rounded-xl p-4 shadow-sm border transition-all">
+      <div class="flex justify-between items-center">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider block opacity-80" id="catLitterTitle">Última Limpeza da Caixinha</span>
+          <span class="text-lg font-black block mt-0.5" id="catLitterTimeAgo">Calculando...</span>
+        </div>
+        <div class="text-right text-xs opacity-90">
+          <span class="block font-semibold" id="catLitterLastDate">--/--</span>
+          <span class="block" id="catLitterLastHour">--:--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARD: Tempo Desde as Últimas Atividades (Apenas Cão - Luck) -->
+    <section id="dogActivitiesTracker" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+      <h3 class="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-1.5">
+        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Últimas Atividades de Luck
+      </h3>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+          <span class="text-slate-400 font-medium">🦮 Passeio</span>
+          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastWalkTime">--</span>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+          <span class="text-slate-400 font-medium">🍖 Comida</span>
+          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastFoodTime">--</span>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+          <span class="text-slate-400 font-medium">💦 Xixi</span>
+          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPeeTime">--</span>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+          <span class="text-slate-400 font-medium">💩 Cocô</span>
+          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPoopTime">--</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Formulário Dinâmico -->
     <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
       <h2 class="text-lg font-bold mb-3 flex items-center gap-2" id="formTitle">
@@ -72,7 +111,7 @@
     <section id="dogFoodGoalSection" class="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
       <div class="flex justify-between items-center mb-1">
         <span class="text-xs font-bold text-amber-800 uppercase">Meta Diária de Ração (Luck)</span>
-        <span id="foodGoalText" class="text-xs font-bold text-amber-900">0 / 400g</span>
+        <span id="foodGoalText" class="text-xs font-bold text-amber-900">0 / 6 medidores</span>
       </div>
       <div class="w-full bg-amber-200 rounded-full h-3">
         <div id="foodProgressBar" class="bg-amber-600 h-3 rounded-full transition-all" style="width: 0%"></div>
@@ -114,7 +153,7 @@
     // Estado da Aplicação
     let currentPet = { name: 'Luck', type: 'dog' };
     let selectedRating = 5;
-    const DOG_DAILY_FOOD_GOAL = 400; // Meta em gramas
+    const DOG_DAILY_FOOD_GOAL_SCOOPS = 6; // Meta em medidores
     let dailyRecords = [];
     let currentFilter = 'todos';
 
@@ -139,7 +178,6 @@
 
       document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-indigo-600"></i> Registrar: ${name}`;
       
-      // Ajusta opções do select de atividade
       const select = document.getElementById('activityType');
       if (type === 'dog') {
         select.innerHTML = `
@@ -150,6 +188,8 @@
           <option value="Comida">🍖 Comida</option>
         `;
         document.getElementById('dogFoodGoalSection').classList.remove('hidden');
+        document.getElementById('dogActivitiesTracker').classList.remove('hidden');
+        document.getElementById('catLitterBoxSection').classList.add('hidden');
       } else {
         select.innerHTML = `
           <option value="Comida">🍖 Comida</option>
@@ -157,10 +197,12 @@
           <option value="Medicamento">💊 Medicamento</option>
         `;
         document.getElementById('dogFoodGoalSection').classList.add('hidden');
+        document.getElementById('dogActivitiesTracker').classList.add('hidden');
+        document.getElementById('catLitterBoxSection').classList.remove('hidden');
       }
 
       renderActivityFields();
-      updateFoodGoalTracker();
+      updateDashboardData();
     }
 
     // Renderiza campos com base na atividade selecionada
@@ -205,12 +247,21 @@
           </div>
         `;
       } else if (activity === 'Comida') {
-        html += `
-          <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Quantidade (gramas)</label>
-            <input type="number" id="fieldFoodGrams" min="1" placeholder="Ex: 100" required class="w-full p-2 border rounded-lg bg-slate-50">
-          </div>
-        `;
+        if (currentPet.type === 'dog') {
+          html += `
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Quantidade (medidores)</label>
+              <input type="number" id="fieldFoodScoops" step="0.5" min="0.5" placeholder="Ex: 2" required class="w-full p-2 border rounded-lg bg-slate-50">
+            </div>
+          `;
+        } else {
+          html += `
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Quantidade (gramas / sachê)</label>
+              <input type="text" id="fieldFoodCat" placeholder="Ex: 50g ou 1 sachê" required class="w-full p-2 border rounded-lg bg-slate-50">
+            </div>
+          `;
+        }
       } else if (activity === 'Medicamento') {
         html += `
           <div>
@@ -227,8 +278,8 @@
           <div>
             <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status da Limpeza</label>
             <select id="fieldBoxStatus" class="w-full p-2 border rounded-lg bg-slate-50">
-              <option value="Limpeza Completa">Limpeza Completa (Troca de areia)</option>
               <option value="Coleta de Resíduos" selected>Coleta de Resíduos</option>
+              <option value="Limpeza Completa">Limpeza Completa (Troca de areia)</option>
             </select>
           </div>
         `;
@@ -269,7 +320,11 @@
       } else if (activity === 'Xixi' || activity === 'Cocô') {
         detalhes.quantidade = document.getElementById('fieldAmount').value;
       } else if (activity === 'Comida') {
-        detalhes.quantidadeGrams = Number(document.getElementById('fieldFoodGrams').value);
+        if (currentPet.type === 'dog') {
+          detalhes.medidores = Number(document.getElementById('fieldFoodScoops').value);
+        } else {
+          detalhes.descricaoComida = document.getElementById('fieldFoodCat').value;
+        }
       } else if (activity === 'Medicamento') {
         detalhes.nomeMedicamento = document.getElementById('fieldMedName').value;
         detalhes.observacao = document.getElementById('fieldMedObs').value;
@@ -292,7 +347,6 @@
           body: JSON.stringify(payload)
         });
 
-        // Adiciona localmente para resposta rápida na UI
         const nowIso = new Date().toISOString();
         dailyRecords.unshift({
           DataHora: nowIso,
@@ -303,7 +357,7 @@
         });
 
         renderReportView();
-        updateFoodGoalTracker();
+        updateDashboardData();
         document.getElementById('activityForm').reset();
         renderActivityFields();
 
@@ -324,13 +378,13 @@
         const response = await fetch(SCRIPT_URL);
         dailyRecords = await response.json();
         renderReportView();
-        updateFoodGoalTracker();
+        updateDashboardData();
       } catch (err) {
         container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Erro ao carregar os dados do Google Sheets.</p>`;
       }
     }
 
-    // Filtros de visualização do relatório
+    // Filtros do relatório
     function setReportFilter(petName) {
       currentFilter = petName;
       document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -345,7 +399,7 @@
       renderReportView();
     }
 
-    // Renderizar a visualização dos registros
+    // Renderizar registros do relatório
     function renderReportView() {
       const selectedDate = document.getElementById('reportDate').value;
       const container = document.getElementById('reportList');
@@ -374,9 +428,9 @@
         } else if (item.Atividade === 'Xixi' || item.Atividade === 'Cocô') {
           extraInfo = `Quantidade: <b>${det.quantidade}</b>`;
         } else if (item.Atividade === 'Comida') {
-          extraInfo = `Porção: <b>${det.quantidadeGrams}g</b>`;
+          extraInfo = det.medidores ? `Porção: <b>${det.medidores} medidor(es)</b>` : `Porção: <b>${det.descricaoComida || ''}</b>`;
         } else if (item.Atividade === 'Medicamento') {
-          badgeStyle = 'bg-red-100 text-red-700 font-bold'; // Destaque para remédios
+          badgeStyle = 'bg-red-100 text-red-700 font-bold';
           extraInfo = `Remédio: <b>${det.nomeMedicamento}</b> ${det.observacao ? `<span class="text-red-600">(${det.observacao})</span>` : ''}`;
         } else if (item.Atividade === 'Caixinha') {
           extraInfo = `Ação: <b>${det.status}</b>`;
@@ -399,11 +453,18 @@
       }).join('');
     }
 
-    // Progresso de alimentação do Luck
+    // Atualizador geral de indicadores (Metas e Timers)
+    function updateDashboardData() {
+      updateFoodGoalTracker();
+      updateDogActivityTimers();
+      updateCatLitterStatus();
+    }
+
+    // Progresso de Ração em Medidores (Luck)
     function updateFoodGoalTracker() {
       const selectedDate = document.getElementById('reportDate').value;
       
-      const totalFoodLuck = dailyRecords
+      const totalScoopsLuck = dailyRecords
         .filter(item => {
           const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
           return item.Pet === 'Luck' && item.Atividade === 'Comida' && itemDate === selectedDate;
@@ -411,12 +472,104 @@
         .reduce((acc, item) => {
           let det = {};
           try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
-          return acc + (Number(det.quantidadeGrams) || 0);
+          return acc + (Number(det.medidores) || 0);
         }, 0);
 
-      const percent = Math.min(100, Math.round((totalFoodLuck / DOG_DAILY_FOOD_GOAL) * 100));
-      document.getElementById('foodGoalText').innerText = `${totalFoodLuck}g / ${DOG_DAILY_FOOD_GOAL}g (${percent}%)`;
+      const percent = Math.min(100, Math.round((totalScoopsLuck / DOG_DAILY_FOOD_GOAL_SCOOPS) * 100));
+      document.getElementById('foodGoalText').innerText = `${totalScoopsLuck} / ${DOG_DAILY_FOOD_GOAL_SCOOPS} medidores (${percent}%)`;
       document.getElementById('foodProgressBar').style.width = `${percent}%`;
+    }
+
+    // Helper: Converte registro em objeto Date real
+    function parseRecordDate(item) {
+      const baseDateStr = item.DataHora.split('T')[0];
+      let det = {};
+      try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+      
+      if (det.horario) {
+        return new Date(`${baseDateStr}T${det.horario}:00`);
+      }
+      return new Date(item.DataHora);
+    }
+
+    // Formata o tempo decorrido de forma amigável
+    function formatTimeAgo(diffMs) {
+      if (diffMs < 0) return 'Agora mesmo';
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      if (diffMins < 60) return `${diffMins} min atrás`;
+      const diffHours = Math.floor(diffMins / 60);
+      const remainingMins = diffMins % 60;
+      if (diffHours < 24) return `${diffHours}h ${remainingMins}m atrás`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ${diffHours % 24}h atrás`;
+    }
+
+    // Calcula tempo desde a última atividade do Luck
+    function updateDogActivityTimers() {
+      const activities = ['Passeio', 'Comida', 'Xixi', 'Cocô'];
+      const targetIds = {
+        'Passeio': 'lastWalkTime',
+        'Comida': 'lastFoodTime',
+        'Xixi': 'lastPeeTime',
+        'Cocô': 'lastPoopTime'
+      };
+
+      const now = new Date();
+
+      activities.forEach(act => {
+        const lastRecord = dailyRecords.find(item => item.Pet === 'Luck' && item.Atividade === act);
+        const el = document.getElementById(targetIds[act]);
+        
+        if (lastRecord) {
+          const recDate = parseRecordDate(lastRecord);
+          const diffMs = now - recDate;
+          el.innerText = formatTimeAgo(diffMs);
+        } else {
+          el.innerText = 'Sem registro';
+        }
+      });
+    }
+
+    // Calcula status da caixinha de areia para o gato ativo
+    function updateCatLitterStatus() {
+      if (currentPet.type !== 'cat') return;
+
+      const card = document.getElementById('catLitterBoxSection');
+      document.getElementById('catLitterTitle').innerText = `Caixinha de Areia (${currentPet.name})`;
+
+      const lastLitterRecord = dailyRecords.find(item => item.Pet === currentPet.name && item.Atividade === 'Caixinha');
+
+      if (!lastLitterRecord) {
+        card.className = "rounded-xl p-4 shadow-sm border bg-slate-200 text-slate-700 border-slate-300";
+        document.getElementById('catLitterTimeAgo').innerText = "Sem registros";
+        document.getElementById('catLitterLastDate').innerText = "--/--";
+        document.getElementById('catLitterLastHour').innerText = "--:--";
+        return;
+      }
+
+      const recDate = parseRecordDate(lastLitterRecord);
+      const now = new Date();
+      const diffMs = now - recDate;
+      const hoursAgo = diffMs / (1000 * 60 * 60);
+
+      document.getElementById('catLitterTimeAgo').innerText = formatTimeAgo(diffMs);
+      document.getElementById('catLitterLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      document.getElementById('catLitterLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      // Lógica de cores por tempo sem limpeza
+      if (hoursAgo >= 12) {
+        // Destaque Vermelho (> 12h)
+        card.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
+      } else if (hoursAgo >= 9) {
+        // Destaque Laranja (> 9h)
+        card.className = "rounded-xl p-4 shadow-md border bg-orange-500 text-white border-orange-600";
+      } else if (hoursAgo >= 6) {
+        // Destaque Amarelo (> 6h)
+        card.className = "rounded-xl p-4 shadow-sm border bg-amber-300 text-amber-950 border-amber-400";
+      } else {
+        // Normal (< 6h)
+        card.className = "rounded-xl p-4 shadow-sm border bg-emerald-50 text-emerald-900 border-emerald-200";
+      }
     }
   </script>
 </body>
