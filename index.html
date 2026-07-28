@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Tracker - Luck, Blue & Penélope</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+    .star-rating i { cursor: pointer; color: #d1d5db; }
+    .star-rating i.active { color: #f59e0b; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-12">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white p-4 shadow-md sticky top-0 z-50">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        <i class="fa-solid fa-paw"></i> Pet Activity Tracker
+      </h1>
+      <span id="syncStatus" class="text-xs bg-indigo-500 px-2 py-1 rounded-full flex items-center gap-1">
+        <i class="fa-solid fa-circle text-green-400 text-[8px]"></i> Online
+      </span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- Seleção do Pet -->
+    <section class="bg-white rounded-xl p-4 shadow-sm">
+      <label class="block text-xs font-semibold uppercase text-slate-500 mb-2">Selecione o Pet</label>
+      <div class="grid grid-cols-3 gap-2" id="petSelector">
+        <button onclick="selectPet('Luck', 'dog')" id="btn-Luck" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all bg-indigo-50 border-indigo-500 text-indigo-700">
+          🐶 Luck
+        </button>
+        <button onclick="selectPet('Blue', 'cat')" id="btn-Blue" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all border-slate-200 hover:bg-slate-50">
+          🐱 Blue
+        </button>
+        <button onclick="selectPet('Penélope', 'cat')" id="btn-Penélope" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all border-slate-200 hover:bg-slate-50">
+          🐱 Penélope
+        </button>
+      </div>
+    </section>
+
+    <!-- Formulário Dinâmico -->
+    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+      <h2 class="text-lg font-bold mb-3 flex items-center gap-2" id="formTitle">
+        <i class="fa-solid fa-plus-circle text-indigo-600"></i> Registrar Atividade: Luck
+      </h2>
+
+      <!-- Seletor de Atividade -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tipo de Atividade</label>
+        <select id="activityType" onchange="renderActivityFields()" class="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 font-medium">
+          <!-- Opções dinâmicas via JS -->
+        </select>
+      </div>
+
+      <form id="activityForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <!-- Campos Específicos -->
+        <div id="dynamicFields" class="space-y-4"></div>
+
+        <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center gap-2">
+          <i class="fa-solid fa-check"></i> Salvar Registro
+        </button>
+      </form>
+    </section>
+
+    <!-- Meta de Alimentação (Cão) -->
+    <section id="dogFoodGoalSection" class="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-xs font-bold text-amber-800 uppercase">Meta Diária de Ração (Luck)</span>
+        <span id="foodGoalText" class="text-xs font-bold text-amber-900">0 / 400g</span>
+      </div>
+      <div class="w-full bg-amber-200 rounded-full h-3">
+        <div id="foodProgressBar" class="bg-amber-600 h-3 rounded-full transition-all" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Relatório Diário -->
+    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-indigo-600"></i> Relatório Diário
+        </h2>
+        <input type="date" id="reportDate" onchange="loadReport()" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
+      </div>
+
+      <div id="reportList" class="space-y-3">
+        <p class="text-center text-slate-400 text-sm py-4">Carregando dados...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ==========================================
+    // CONFIGURAÇÃO - URL DO SEU APPS SCRIPT
+    // ==========================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv0fk19XuZ_dXCnoy6_4XlyD08VrFJLV8QavvVOwm1nBUsRUkwRy8dXqtsYXs09Qrv/exec";
+
+    // Estado da Aplicação
+    let currentPet = { name: 'Luck', type: 'dog' };
+    let selectedRating = 5;
+    const DOG_DAILY_FOOD_GOAL = 400; // Meta em gramas
+    let dailyRecords = [];
+
+    // Inicialização
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+      selectPet('Luck', 'dog');
+      loadReport();
+    });
+
+    // Seleção do Pet
+    function selectPet(name, type) {
+      currentPet = { name, type };
+      
+      document.querySelectorAll('.pet-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+        btn.classList.add('border-slate-200');
+      });
+      
+      const activeBtn = document.getElementById(`btn-${name}`);
+      activeBtn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+
+      document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-indigo-600"></i> Registrar: ${name}`;
+      
+      // Ajusta opçoes do select de atividade
+      const select = document.getElementById('activityType');
+      if (type === 'dog') {
+        select.innerHTML = `
+          <option value="Passeio">🦮 Passeio</option>
+          <option value="Xixi">💦 Xixi</option>
+          <option value="Cocô">💩 Cocô</option>
+          <option value="Medicamento">💊 Medicamento</option>
+          <option value="Comida">🍖 Comida</option>
+        `;
+        document.getElementById('dogFoodGoalSection').classList.remove('hidden');
+      } else {
+        select.innerHTML = `
+          <option value="Comida">🍖 Comida</option>
+          <option value="Caixinha">🪨 Caixinha de Areia</option>
+          <option value="Medicamento">💊 Medicamento</option>
+        `;
+        document.getElementById('dogFoodGoalSection').classList.add('hidden');
+      }
+
+      renderActivityFields();
+      updateFoodGoalTracker();
+    }
+
+    // Renderiza campos com base na atividade selecionada
+    function renderActivityFields() {
+      const activity = document.getElementById('activityType').value;
+      const container = document.getElementById('dynamicFields');
+      const now = new Date().toTimeString().slice(0,5);
+
+      let html = `
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Horário</label>
+          <input type="time" id="fieldTime" value="${now}" required class="w-full p-2 border rounded-lg bg-slate-50">
+        </div>
+      `;
+
+      if (activity === 'Passeio') {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Intensidade</label>
+            <select id="fieldIntensity" class="w-full p-2 border rounded-lg bg-slate-50">
+              <option value="Leve">Leve</option>
+              <option value="Moderada" selected>Moderada</option>
+              <option value="Intensa">Intensa</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Comportamento</label>
+            <div class="star-rating flex gap-2 text-2xl" id="starContainer">
+              ${[1,2,3,4,5].map(i => `<i class="fa-solid fa-star active" data-value="${i}" onclick="setRating(${i})"></i>`).join('')}
+            </div>
+          </div>
+        `;
+      } else if (activity === 'Xixi' || activity === 'Cocô') {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Quantidade</label>
+            <select id="fieldAmount" class="w-full p-2 border rounded-lg bg-slate-50">
+              <option value="Pouco">Pouco</option>
+              <option value="Normal" selected>Normal</option>
+              <option value="Muito">Muito</option>
+            </select>
+          </div>
+        `;
+      } else if (activity === 'Comida') {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Quantidade (gramas)</label>
+            <input type="number" id="fieldFoodGrams" min="1" placeholder="Ex: 100" required class="w-full p-2 border rounded-lg bg-slate-50">
+          </div>
+        `;
+      } else if (activity === 'Medicamento') {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome do Medicamento</label>
+            <input type="text" id="fieldMedName" placeholder="Ex: Vermífugo / Antibiótico" required class="w-full p-2 border rounded-lg bg-slate-50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Observações / Alertas</label>
+            <input type="text" id="fieldMedObs" placeholder="Ex: Tomar com comida" class="w-full p-2 border rounded-lg bg-slate-50">
+          </div>
+        `;
+      } else if (activity === 'Caixinha') {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status da Limpeza</label>
+            <select id="fieldBoxStatus" class="w-full p-2 border rounded-lg bg-slate-50">
+              <option value="Limpeza Completa">Limpeza Completa (Troca de areia)</option>
+              <option value="Coleta de Resíduos" selected>Coleta de Resíduos</option>
+            </select>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      selectedRating = 5;
+    }
+
+    // Avaliação por estrelas
+    function setRating(val) {
+      selectedRating = val;
+      const stars = document.querySelectorAll('#starContainer i');
+      stars.forEach((star, index) => {
+        if (index < val) {
+          star.classList.add('active');
+        } else {
+          star.classList.remove('active');
+        }
+      });
+    }
+
+    // Submissão do Formulário
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+
+      const activity = document.getElementById('activityType').value;
+      const time = document.getElementById('fieldTime').value;
+
+      let detalhes = { horario: time };
+
+      if (activity === 'Passeio') {
+        detalhes.intensidade = document.getElementById('fieldIntensity').value;
+        detalhes.comportamento = selectedRating;
+      } else if (activity === 'Xixi' || activity === 'Cocô') {
+        detalhes.quantidade = document.getElementById('fieldAmount').value;
+      } else if (activity === 'Comida') {
+        detalhes.quantidadeGrams = Number(document.getElementById('fieldFoodGrams').value);
+      } else if (activity === 'Medicamento') {
+        detalhes.nomeMedicamento = document.getElementById('fieldMedName').value;
+        detalhes.observacao = document.getElementById('fieldMedObs').value;
+      } else if (activity === 'Caixinha') {
+        detalhes.status = document.getElementById('fieldBoxStatus').value;
+      }
+
+      const payload = {
+        pet: currentPet.name,
+        tipoPet: currentPet.type,
+        atividade: activity,
+        detalhes: detalhes
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        // Adiciona localmente para resposta rápida na UI
+        const nowIso = new Date().toISOString();
+        dailyRecords.unshift({
+          DataHora: nowIso,
+          Pet: currentPet.name,
+          TipoPet: currentPet.type,
+          Atividade: activity,
+          Detalhes: JSON.stringify(detalhes)
+        });
+
+        renderReportView();
+        updateFoodGoalTracker();
+        document.getElementById('activityForm').reset();
+        renderActivityFields();
+
+      } catch (err) {
+        alert("Erro ao salvar os dados. Verifique a configuração da URL.");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> Salvar Registro`;
+      }
+    }
+
+    // Carregar Relatório Diário
+    async function loadReport() {
+      const container = document.getElementById('reportList');
+      container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4"><i class="fa-solid fa-spinner fa-spin"></i> Buscando registros...</p>`;
+
+      try {
+        const response = await fetch(SCRIPT_URL);
+        dailyRecords = await response.json();
+        renderReportView();
+        updateFoodGoalTracker();
+      } catch (err) {
+        container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Insira a URL do Apps Script para carregar os dados.</p>`;
+      }
+    }
+
+    // Renderizar a visualização dos registros
+    function renderReportView() {
+      const selectedDate = document.getElementById('reportDate').value;
+      const container = document.getElementById('reportList');
+
+      const filtered = dailyRecords.filter(item => {
+        const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
+        return itemDate === selectedDate;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">Nenhum registro encontrado para esta data.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        let det = {};
+        try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+
+        let extraInfo = '';
+        if (item.Atividade === 'Passeio') {
+          extraInfo = `Intensidade: <b>${det.intensidade}</b> | Nota: <b>${'★'.repeat(det.comportamento || 0)}</b>`;
+        } else if (item.Atividade === 'Xixi' || item.Atividade === 'Cocô') {
+          extraInfo = `Quantidade: <b>${det.quantidade}</b>`;
+        } else if (item.Atividade === 'Comida') {
+          extraInfo = `Porção: <b>${det.quantidadeGrams}g</b>`;
+        } else if (item.Atividade === 'Medicamento') {
+          extraInfo = `Remédio: <b>${det.nomeMedicamento}</b> ${det.observacao ? `(${det.observacao})` : ''}`;
+        } else if (item.Atividade === 'Caixinha') {
+          extraInfo = `Ação: <b>${det.status}</b>`;
+        }
+
+        const petBadge = item.Pet === 'Luck' ? '🐶 Luck' : (item.Pet === 'Blue' ? '🐱 Blue' : '🐱 Penélope');
+
+        return `
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold text-slate-700">${petBadge}</span>
+                <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-semibold">${item.Atividade}</span>
+                <span class="text-slate-400">${det.horario || ''}</span>
+              </div>
+              <div class="text-slate-600">${extraInfo}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Progresso de alimentação do Luck
+    function updateFoodGoalTracker() {
+      const selectedDate = document.getElementById('reportDate').value;
+      
+      const totalFoodLuck = dailyRecords
+        .filter(item => {
+          const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
+          return item.Pet === 'Luck' && item.Atividade === 'Comida' && itemDate === selectedDate;
+        })
+        .reduce((acc, item) => {
+          let det = {};
+          try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+          return acc + (Number(det.quantidadeGrams) || 0);
+        }, 0);
+
+      const percent = Math.min(100, Math.round((totalFoodLuck / DOG_DAILY_FOOD_GOAL) * 100));
+      document.getElementById('foodGoalText').innerText = `${totalFoodLuck}g / ${DOG_DAILY_FOOD_GOAL}g (${percent}%)`;
+      document.getElementById('foodProgressBar').style.width = `${percent}%`;
+    }
+  </script>
+</body>
+</html>
