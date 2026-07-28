@@ -163,7 +163,7 @@
         <input type="date" id="reportDate" onchange="setPeriodFilter('custom')" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
       </div>
 
-      <!-- Filtro de Período (Hoje, 1 Dia, Todo o Histórico) -->
+      <!-- Filtro de Período -->
       <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
         <button onclick="setPeriodFilter('today')" id="period-today" class="period-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Hoje</button>
         <button onclick="setPeriodFilter('1day')" id="period-1day" class="period-btn flex-1 py-1 rounded text-center text-slate-600">Ontem e Hoje</button>
@@ -191,7 +191,7 @@
         </select>
       </div>
 
-      <!-- Indicador de filtro ativo por nota (oculto por padrão) -->
+      <!-- Indicador de filtro ativo por nota -->
       <div id="ratingFilterBadge" class="hidden flex justify-between items-center bg-amber-50 border border-amber-200 p-2 rounded-lg text-xs text-amber-900">
         <span id="ratingFilterText">Filtrando passeios por nota...</span>
         <button onclick="clearRatingFilter()" class="text-amber-700 font-bold hover:underline">Remover</button>
@@ -205,30 +205,23 @@
   </main>
 
   <script>
-    // ==========================================
-    // CONFIGURAÇÃO - URL DO SEU APPS SCRIPT
-    // ==========================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv0fk19XuZ_dXCnoy6_4XlyD08VrFJLV8QavvVOwm1nBUsRUkwRy8dXqtsYXs09Qrv/exec";
 
-    // Estado da Aplicação
     let currentPet = { name: 'Luck', type: 'dog' };
     let selectedRating = 5;
     const DOG_DAILY_FOOD_GOAL_SCOOPS = 6;
     let dailyRecords = [];
     
-    // Filtros de Relatório
     let currentFilter = 'todos';
-    let currentPeriodMode = 'today'; // 'today', '1day', 'all', 'custom'
-    let selectedRatingFilter = null; // null ou 1, 2, 3, 4, 5
+    let currentPeriodMode = 'today';
+    let selectedRatingFilter = null;
 
-    // Inicialização
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
       selectPet('Luck', 'dog');
       loadReport();
     });
 
-    // Seleção do Pet no Formulário
     function selectPet(name, type) {
       currentPet = { name, type };
       
@@ -270,7 +263,6 @@
       updateDashboardData();
     }
 
-    // Renderiza campos com base na atividade selecionada
     function renderActivityFields() {
       const activity = document.getElementById('activityType').value;
       const container = document.getElementById('dynamicFields');
@@ -298,6 +290,10 @@
             <div class="star-rating flex gap-2 text-2xl" id="starContainer">
               ${[1,2,3,4,5].map(i => `<i class="fa-solid fa-star active" data-value="${i}" onclick="setRating(${i})"></i>`).join('')}
             </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Observação (máx. 50 caracteres)</label>
+            <input type="text" id="fieldWalkObs" maxlength="50" placeholder="Ex: fez xixi/cocô, agitado..." class="w-full p-2 border rounded-lg bg-slate-50">
           </div>
         `;
       } else if (activity === 'Xixi' || activity === 'Cocô') {
@@ -354,7 +350,6 @@
       selectedRating = 5;
     }
 
-    // Avaliação por estrelas
     function setRating(val) {
       selectedRating = val;
       const stars = document.querySelectorAll('#starContainer i');
@@ -367,7 +362,6 @@
       });
     }
 
-    // Submissão do Formulário
     async function handleFormSubmit(e) {
       e.preventDefault();
       const saveBtn = document.getElementById('saveBtn');
@@ -382,6 +376,7 @@
       if (activity === 'Passeio') {
         detalhes.intensidade = document.getElementById('fieldIntensity').value;
         detalhes.comportamento = selectedRating;
+        detalhes.obs = document.getElementById('fieldWalkObs').value.trim().substring(0, 50);
       } else if (activity === 'Xixi' || activity === 'Cocô') {
         detalhes.quantidade = document.getElementById('fieldAmount').value;
       } else if (activity === 'Comida') {
@@ -434,7 +429,6 @@
       }
     }
 
-    // Carregar Relatório Diário
     async function loadReport() {
       const container = document.getElementById('reportList');
       container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4"><i class="fa-solid fa-spinner fa-spin"></i> Buscando registros...</p>`;
@@ -449,13 +443,11 @@
       }
     }
 
-    // Excluir Lançamento
     async function deleteRecord(dataHoraIso) {
       const confirmDelete = confirm("Tem certeza que deseja excluir este lançamento?");
       if (!confirmDelete) return;
 
       try {
-        // Envia comando para exclusão via Google Apps Script
         await fetch(SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -466,7 +458,6 @@
           })
         });
 
-        // Remove localmente
         dailyRecords = dailyRecords.filter(item => item.DataHora !== dataHoraIso);
         renderReportView();
         updateDashboardData();
@@ -475,7 +466,6 @@
       }
     }
 
-    // Filtro por Período
     function setPeriodFilter(mode) {
       currentPeriodMode = mode;
       document.querySelectorAll('.period-btn').forEach(btn => {
@@ -498,7 +488,6 @@
       renderReportView();
     }
 
-    // Filtros por Perfil no Relatório
     function setReportFilter(petName) {
       currentFilter = petName;
       document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -514,7 +503,6 @@
       renderReportView();
     }
 
-    // Filtrar passeios por nota a partir do card
     function filterWalksByRating(rating) {
       selectedRatingFilter = rating;
       document.getElementById('categoryFilter').value = 'Passeio';
@@ -529,7 +517,6 @@
       renderReportView();
     }
 
-    // Renderizar registros do relatório
     function renderReportView() {
       const selectedDate = document.getElementById('reportDate').value;
       const categoryFilter = document.getElementById('categoryFilter').value;
@@ -590,6 +577,9 @@
 
         if (item.Atividade === 'Passeio') {
           extraInfo = `Intensidade: <b>${det.intensidade}</b> | Nota: <b class="text-amber-600">${'★'.repeat(det.comportamento || 0)}</b>`;
+          if (det.obs) {
+            extraInfo += `<br><span class="text-slate-500 italic">" ${det.obs} "</span>`;
+          }
         } else if (item.Atividade === 'Xixi' || item.Atividade === 'Cocô') {
           extraInfo = `Quantidade: <b>${det.quantidade}</b>`;
         } else if (item.Atividade === 'Comida') {
@@ -622,7 +612,6 @@
       }).join('');
     }
 
-    // Atualizador Geral
     function updateDashboardData() {
       updateFoodGoalTracker();
       updateDogActivityTimers();
@@ -630,7 +619,6 @@
       updateWalkRatingCard();
     }
 
-    // Atualiza Card de Avaliação dos Passeios do Luck
     function updateWalkRatingCard() {
       const range = document.getElementById('walkRatingRange').value;
       const now = new Date();
@@ -686,7 +674,6 @@
       }).join('');
     }
 
-    // Progresso de Ração em Medidores (Luck)
     function updateFoodGoalTracker() {
       const selectedDate = document.getElementById('reportDate').value;
       
@@ -706,7 +693,6 @@
       document.getElementById('foodProgressBar').style.width = `${percent}%`;
     }
 
-    // Helper: Converte registro em objeto Date
     function parseRecordDate(item) {
       const baseDateStr = item.DataHora.split('T')[0];
       let det = {};
@@ -718,7 +704,6 @@
       return new Date(item.DataHora);
     }
 
-    // Formata o tempo decorrido
     function formatTimeAgo(diffMs) {
       if (diffMs < 0) return 'Agora mesmo';
       const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -730,7 +715,6 @@
       return `${diffDays}d ${diffHours % 24}h atrás`;
     }
 
-    // Tempo desde a última atividade do Luck
     function updateDogActivityTimers() {
       const activities = ['Passeio', 'Comida', 'Xixi', 'Cocô'];
       const targetIds = {
@@ -756,13 +740,11 @@
       });
     }
 
-    // Status das caixinhas de areia (Resíduos e Limpeza Completa)
     function updateCatLitterStatus() {
       if (currentPet.type !== 'cat') return;
 
       const now = new Date();
 
-      // 1. CARD DE COLETA DE RESÍDUOS
       const cardResidues = document.getElementById('catLitterBoxSection');
       const lastResidueRecord = dailyRecords.find(item => {
         const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
@@ -797,7 +779,6 @@
         }
       }
 
-      // 2. CARD DE LIMPEZA COMPLETA (TROCA DE AREIA)
       const cardFullClean = document.getElementById('catFullCleanSection');
       const lastFullRecord = dailyRecords.find(item => {
         const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
