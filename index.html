@@ -30,21 +30,18 @@
 
     <!-- Seleção do Pet -->
     <section class="bg-white rounded-xl p-4 shadow-sm">
-      <label class="block text-xs font-semibold uppercase text-slate-500 mb-2">Selecione o Pet</label>
-      <div class="grid grid-cols-3 gap-2" id="petSelector">
+      <label class="block text-xs font-semibold uppercase text-slate-500 mb-2">Selecione o Perfil</label>
+      <div class="grid grid-cols-2 gap-2" id="petSelector">
         <button onclick="selectPet('Luck', 'dog')" id="btn-Luck" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all bg-indigo-50 border-indigo-500 text-indigo-700">
           🐶 Luck
         </button>
-        <button onclick="selectPet('Blue', 'cat')" id="btn-Blue" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all border-slate-200 hover:bg-slate-50">
-          🐱 Blue
-        </button>
-        <button onclick="selectPet('Penélope', 'cat')" id="btn-Penélope" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all border-slate-200 hover:bg-slate-50">
-          🐱 Penélope
+        <button onclick="selectPet('Blue e Penélope', 'cat')" id="btn-Blue-Penelope" class="pet-btn p-3 rounded-lg border text-center font-medium transition-all border-slate-200 hover:bg-slate-50">
+          🐱 Blue e Penélope
         </button>
       </div>
     </section>
 
-    <!-- CARD: Status da Caixinha de Areia (Apenas Gatos) -->
+    <!-- CARD: Status da Caixinha de Areia (Gatos) -->
     <section id="catLitterBoxSection" class="hidden rounded-xl p-4 shadow-sm border transition-all">
       <div class="flex justify-between items-center">
         <div>
@@ -58,7 +55,7 @@
       </div>
     </section>
 
-    <!-- CARD: Tempo Desde as Últimas Atividades (Apenas Cão - Luck) -->
+    <!-- CARD: Tempo Desde as Últimas Atividades (Luck) -->
     <section id="dogActivitiesTracker" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
       <h3 class="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-1.5">
         <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Últimas Atividades de Luck
@@ -132,8 +129,7 @@
         <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
           <button onclick="setReportFilter('todos')" id="filter-todos" class="filter-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Todos</button>
           <button onclick="setReportFilter('Luck')" id="filter-Luck" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐶 Luck</button>
-          <button onclick="setReportFilter('Blue')" id="filter-Blue" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Blue</button>
-          <button onclick="setReportFilter('Penélope')" id="filter-Penélope" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Penélope</button>
+          <button onclick="setReportFilter('Blue e Penélope')" id="filter-Blue-Penelope" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Blue e Penélope</button>
         </div>
       </div>
 
@@ -153,7 +149,7 @@
     // Estado da Aplicação
     let currentPet = { name: 'Luck', type: 'dog' };
     let selectedRating = 5;
-    const DOG_DAILY_FOOD_GOAL_SCOOPS = 6; // Meta em medidores
+    const DOG_DAILY_FOOD_GOAL_SCOOPS = 6;
     let dailyRecords = [];
     let currentFilter = 'todos';
 
@@ -173,7 +169,8 @@
         btn.classList.add('border-slate-200');
       });
       
-      const activeBtn = document.getElementById(`btn-${name}`);
+      const btnId = name === 'Luck' ? 'btn-Luck' : 'btn-Blue-Penelope';
+      const activeBtn = document.getElementById(btnId);
       activeBtn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
 
       document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-indigo-600"></i> Registrar: ${name}`;
@@ -392,7 +389,8 @@
         btn.classList.add('text-slate-600');
       });
 
-      const activeFilterBtn = document.getElementById(`filter-${petName}`);
+      const btnId = petName === 'todos' ? 'filter-todos' : (petName === 'Luck' ? 'filter-Luck' : 'filter-Blue-Penelope');
+      const activeFilterBtn = document.getElementById(btnId);
       activeFilterBtn.classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
       activeFilterBtn.classList.remove('text-slate-600');
 
@@ -407,7 +405,16 @@
       const filtered = dailyRecords.filter(item => {
         const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
         const matchDate = itemDate === selectedDate;
-        const matchPet = currentFilter === 'todos' || item.Pet === currentFilter;
+        
+        // Compatibilidade com registros legados ("Blue" ou "Penélope" isolados)
+        let matchPet = currentFilter === 'todos';
+        if (!matchPet) {
+          if (currentFilter === 'Luck') {
+            matchPet = item.Pet === 'Luck';
+          } else {
+            matchPet = item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope';
+          }
+        }
         return matchDate && matchPet;
       });
 
@@ -436,7 +443,7 @@
           extraInfo = `Ação: <b>${det.status}</b>`;
         }
 
-        const petBadge = item.Pet === 'Luck' ? '🐶 Luck' : (item.Pet === 'Blue' ? '🐱 Blue' : '🐱 Penélope');
+        const petBadge = item.Pet === 'Luck' ? '🐶 Luck' : '🐱 Blue e Penélope';
 
         return `
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
@@ -453,7 +460,7 @@
       }).join('');
     }
 
-    // Atualizador geral de indicadores (Metas e Timers)
+    // Atualizador geral
     function updateDashboardData() {
       updateFoodGoalTracker();
       updateDogActivityTimers();
@@ -480,7 +487,7 @@
       document.getElementById('foodProgressBar').style.width = `${percent}%`;
     }
 
-    // Helper: Converte registro em objeto Date real
+    // Helper: Converte registro em objeto Date
     function parseRecordDate(item) {
       const baseDateStr = item.DataHora.split('T')[0];
       let det = {};
@@ -492,7 +499,7 @@
       return new Date(item.DataHora);
     }
 
-    // Formata o tempo decorrido de forma amigável
+    // Formata o tempo decorrido
     function formatTimeAgo(diffMs) {
       if (diffMs < 0) return 'Agora mesmo';
       const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -504,7 +511,7 @@
       return `${diffDays}d ${diffHours % 24}h atrás`;
     }
 
-    // Calcula tempo desde a última atividade do Luck
+    // Tempo desde a última atividade do Luck
     function updateDogActivityTimers() {
       const activities = ['Passeio', 'Comida', 'Xixi', 'Cocô'];
       const targetIds = {
@@ -530,14 +537,17 @@
       });
     }
 
-    // Calcula status da caixinha de areia para o gato ativo
+    // Status da caixinha de areia para os gatos
     function updateCatLitterStatus() {
       if (currentPet.type !== 'cat') return;
 
       const card = document.getElementById('catLitterBoxSection');
-      document.getElementById('catLitterTitle').innerText = `Caixinha de Areia (${currentPet.name})`;
+      document.getElementById('catLitterTitle').innerText = `Caixinha de Areia (Blue e Penélope)`;
 
-      const lastLitterRecord = dailyRecords.find(item => item.Pet === currentPet.name && item.Atividade === 'Caixinha');
+      // Busca o registro mais recente (incluindo dados antigos de "Blue" ou "Penélope" se existirem)
+      const lastLitterRecord = dailyRecords.find(item => 
+        (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope') && item.Atividade === 'Caixinha'
+      );
 
       if (!lastLitterRecord) {
         card.className = "rounded-xl p-4 shadow-sm border bg-slate-200 text-slate-700 border-slate-300";
@@ -556,18 +566,13 @@
       document.getElementById('catLitterLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       document.getElementById('catLitterLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-      // Lógica de cores por tempo sem limpeza
       if (hoursAgo >= 12) {
-        // Destaque Vermelho (> 12h)
         card.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
       } else if (hoursAgo >= 9) {
-        // Destaque Laranja (> 9h)
         card.className = "rounded-xl p-4 shadow-md border bg-orange-500 text-white border-orange-600";
       } else if (hoursAgo >= 6) {
-        // Destaque Amarelo (> 6h)
         card.className = "rounded-xl p-4 shadow-sm border bg-amber-300 text-amber-950 border-amber-400";
       } else {
-        // Normal (< 6h)
         card.className = "rounded-xl p-4 shadow-sm border bg-emerald-50 text-emerald-900 border-emerald-200";
       }
     }
