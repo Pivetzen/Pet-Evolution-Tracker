@@ -41,19 +41,36 @@
       </div>
     </section>
 
-    <!-- CARD: Status da Caixinha de Areia (Gatos) -->
-    <section id="catLitterBoxSection" class="hidden rounded-xl p-4 shadow-sm border transition-all">
-      <div class="flex justify-between items-center">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider block opacity-80" id="catLitterTitle">Última Limpeza da Caixinha</span>
-          <span class="text-lg font-black block mt-0.5" id="catLitterTimeAgo">Calculando...</span>
+    <!-- CONTAINER DOS GATOS (BLUE & PENÉLOPE) -->
+    <div id="catSectionContainer" class="hidden space-y-3">
+      <!-- CARD 1: Coleta de Resíduos (Gatos) -->
+      <section id="catLitterBoxSection" class="rounded-xl p-4 shadow-sm border transition-all">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider block opacity-80">Última Coleta de Resíduos</span>
+            <span class="text-lg font-black block mt-0.5" id="catLitterTimeAgo">Calculando...</span>
+          </div>
+          <div class="text-right text-xs opacity-90">
+            <span class="block font-semibold" id="catLitterLastDate">--/--</span>
+            <span class="block" id="catLitterLastHour">--:--</span>
+          </div>
         </div>
-        <div class="text-right text-xs opacity-90">
-          <span class="block font-semibold" id="catLitterLastDate">--/--</span>
-          <span class="block" id="catLitterLastHour">--:--</span>
+      </section>
+
+      <!-- CARD 2: Limpeza Completa da Caixinha (Gatos) -->
+      <section id="catFullCleanSection" class="rounded-xl p-4 shadow-sm border transition-all">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider block opacity-80">Última Limpeza Completa (Troca de Areia)</span>
+            <span class="text-lg font-black block mt-0.5" id="catFullCleanTimeAgo">Calculando...</span>
+          </div>
+          <div class="text-right text-xs opacity-90">
+            <span class="block font-semibold" id="catFullCleanLastDate">--/--</span>
+            <span class="block" id="catFullCleanLastHour">--:--</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <!-- CONTAINER DO CÃO (LUCK) -->
     <div id="dogSectionContainer" class="space-y-4">
@@ -237,7 +254,7 @@
         `;
         document.getElementById('dogFoodGoalSection').classList.remove('hidden');
         document.getElementById('dogSectionContainer').classList.remove('hidden');
-        document.getElementById('catLitterBoxSection').classList.add('hidden');
+        document.getElementById('catSectionContainer').classList.add('hidden');
       } else {
         select.innerHTML = `
           <option value="Comida">🍖 Comida</option>
@@ -246,7 +263,7 @@
         `;
         document.getElementById('dogFoodGoalSection').classList.add('hidden');
         document.getElementById('dogSectionContainer').classList.add('hidden');
-        document.getElementById('catLitterBoxSection').classList.remove('hidden');
+        document.getElementById('catSectionContainer').classList.remove('hidden');
       }
 
       renderActivityFields();
@@ -432,7 +449,7 @@
       }
     }
 
-    // Filtro por Período (Hoje, 1 Dia, Todo Histórico)
+    // Filtro por Período
     function setPeriodFilter(mode) {
       currentPeriodMode = mode;
       document.querySelectorAll('.period-btn').forEach(btn => {
@@ -492,7 +509,6 @@
       const categoryFilter = document.getElementById('categoryFilter').value;
       const container = document.getElementById('reportList');
 
-      const today = new Date();
       const selectedDateTime = new Date(selectedDate + 'T23:59:59');
       const yesterdayDateTime = new Date(selectedDateTime);
       yesterdayDateTime.setDate(yesterdayDateTime.getDate() - 1);
@@ -502,7 +518,6 @@
         const itemDateStr = item.DataHora.split('T')[0];
         const itemDate = new Date(item.DataHora);
 
-        // 1. Filtro de Data / Período
         let matchDate = true;
         if (currentPeriodMode === 'today') {
           matchDate = itemDateStr === selectedDate;
@@ -514,7 +529,6 @@
           matchDate = true;
         }
 
-        // 2. Filtro de Perfil
         let matchPet = currentFilter === 'todos';
         if (!matchPet) {
           if (currentFilter === 'Luck') {
@@ -524,10 +538,8 @@
           }
         }
 
-        // 3. Filtro de Categoria
         let matchCategory = categoryFilter === 'todas' || item.Atividade === categoryFilter;
 
-        // 4. Filtro Específico por Nota de Passeio
         let matchRating = true;
         if (selectedRatingFilter !== null && item.Atividade === 'Passeio') {
           let det = {};
@@ -715,42 +727,86 @@
       });
     }
 
-    // Status da caixinha de areia para os gatos
+    // Status das caixinhas de areia (Resíduos e Limpeza Completa)
     function updateCatLitterStatus() {
       if (currentPet.type !== 'cat') return;
 
-      const card = document.getElementById('catLitterBoxSection');
-      document.getElementById('catLitterTitle').innerText = `Caixinha de Areia (Blue e Penélope)`;
+      const now = new Date();
 
-      const lastLitterRecord = dailyRecords.find(item => 
-        (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope') && item.Atividade === 'Caixinha'
-      );
+      // =========================================
+      // 1. CARD DE COLETA DE RESÍDUOS
+      // =========================================
+      const cardResidues = document.getElementById('catLitterBoxSection');
+      const lastResidueRecord = dailyRecords.find(item => {
+        const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
+        if (!isCat || item.Atividade !== 'Caixinha') return false;
+        let det = {};
+        try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+        return !det.status || det.status === 'Coleta de Resíduos';
+      });
 
-      if (!lastLitterRecord) {
-        card.className = "rounded-xl p-4 shadow-sm border bg-slate-200 text-slate-700 border-slate-300";
+      if (!lastResidueRecord) {
+        cardResidues.className = "rounded-xl p-4 shadow-sm border bg-slate-200 text-slate-700 border-slate-300";
         document.getElementById('catLitterTimeAgo').innerText = "Sem registros";
         document.getElementById('catLitterLastDate').innerText = "--/--";
         document.getElementById('catLitterLastHour').innerText = "--:--";
-        return;
+      } else {
+        const recDate = parseRecordDate(lastResidueRecord);
+        const diffMs = now - recDate;
+        const hoursAgo = diffMs / (1000 * 60 * 60);
+
+        document.getElementById('catLitterTimeAgo').innerText = formatTimeAgo(diffMs);
+        document.getElementById('catLitterLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        document.getElementById('catLitterLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        if (hoursAgo >= 12) {
+          cardResidues.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
+        } else if (hoursAgo >= 9) {
+          cardResidues.className = "rounded-xl p-4 shadow-md border bg-orange-500 text-white border-orange-600";
+        } else if (hoursAgo >= 6) {
+          cardResidues.className = "rounded-xl p-4 shadow-sm border bg-amber-300 text-amber-950 border-amber-400";
+        } else {
+          cardResidues.className = "rounded-xl p-4 shadow-sm border bg-emerald-50 text-emerald-900 border-emerald-200";
+        }
       }
 
-      const recDate = parseRecordDate(lastLitterRecord);
-      const now = new Date();
-      const diffMs = now - recDate;
-      const hoursAgo = diffMs / (1000 * 60 * 60);
+      // =========================================
+      // 2. CARD DE LIMPEZA COMPLETA (TROCA DE AREIA)
+      // =========================================
+      const cardFullClean = document.getElementById('catFullCleanSection');
+      const lastFullRecord = dailyRecords.find(item => {
+        const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
+        if (!isCat || item.Atividade !== 'Caixinha') return false;
+        let det = {};
+        try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+        return det.status === 'Limpeza Completa';
+      });
 
-      document.getElementById('catLitterTimeAgo').innerText = formatTimeAgo(diffMs);
-      document.getElementById('catLitterLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      document.getElementById('catLitterLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-      if (hoursAgo >= 12) {
-        card.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
-      } else if (hoursAgo >= 9) {
-        card.className = "rounded-xl p-4 shadow-md border bg-orange-500 text-white border-orange-600";
-      } else if (hoursAgo >= 6) {
-        card.className = "rounded-xl p-4 shadow-sm border bg-amber-300 text-amber-950 border-amber-400";
+      if (!lastFullRecord) {
+        cardFullClean.className = "rounded-xl p-4 shadow-sm border bg-slate-200 text-slate-700 border-slate-300";
+        document.getElementById('catFullCleanTimeAgo').innerText = "Sem registros";
+        document.getElementById('catFullCleanLastDate').innerText = "--/--";
+        document.getElementById('catFullCleanLastHour').innerText = "--:--";
       } else {
-        card.className = "rounded-xl p-4 shadow-sm border bg-emerald-50 text-emerald-900 border-emerald-200";
+        const recDate = parseRecordDate(lastFullRecord);
+        const diffMs = now - recDate;
+        const daysAgo = diffMs / (1000 * 60 * 60 * 24);
+
+        document.getElementById('catFullCleanTimeAgo').innerText = formatTimeAgo(diffMs);
+        document.getElementById('catFullCleanLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        document.getElementById('catFullCleanLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        // Regras do Card da Limpeza Completa por dias:
+        // Amarelo para 3 dias, Laranja para 4 dias, Vermelho para 6 dias
+        if (daysAgo >= 6) {
+          cardFullClean.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
+        } else if (daysAgo >= 4) {
+          cardFullClean.className = "rounded-xl p-4 shadow-md border bg-orange-500 text-white border-orange-600";
+        } else if (daysAgo >= 3) {
+          cardFullClean.className = "rounded-xl p-4 shadow-sm border bg-amber-300 text-amber-950 border-amber-400";
+        } else {
+          cardFullClean.className = "rounded-xl p-4 shadow-sm border bg-emerald-50 text-emerald-900 border-emerald-200";
+        }
       }
     }
   </script>
