@@ -55,30 +55,52 @@
       </div>
     </section>
 
-    <!-- CARD: Tempo Desde as Últimas Atividades (Luck) -->
-    <section id="dogActivitiesTracker" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-      <h3 class="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-1.5">
-        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Últimas Atividades de Luck
-      </h3>
-      <div class="grid grid-cols-2 gap-2 text-xs">
-        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
-          <span class="text-slate-400 font-medium">🦮 Passeio</span>
-          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastWalkTime">--</span>
+    <!-- CONTAINER DO CÃO (LUCK) -->
+    <div id="dogSectionContainer" class="space-y-4">
+      <!-- CARD: Tempo Desde as Últimas Atividades (Luck) -->
+      <section id="dogActivitiesTracker" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+        <h3 class="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-1.5">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Últimas Atividades de Luck
+        </h3>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+            <span class="text-slate-400 font-medium">🦮 Passeio</span>
+            <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastWalkTime">--</span>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+            <span class="text-slate-400 font-medium">🍖 Comida</span>
+            <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastFoodTime">--</span>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+            <span class="text-slate-400 font-medium">💦 Xixi</span>
+            <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPeeTime">--</span>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
+            <span class="text-slate-400 font-medium">💩 Cocô</span>
+            <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPoopTime">--</span>
+          </div>
         </div>
-        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
-          <span class="text-slate-400 font-medium">🍖 Comida</span>
-          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastFoodTime">--</span>
+      </section>
+
+      <!-- CARD: Avaliação de Comportamento nos Passeios (Luck) -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold uppercase text-slate-500 flex items-center gap-1.5">
+            <i class="fa-solid fa-star text-amber-500"></i> Comportamento nos Passeios
+          </h3>
+          <select id="walkRatingRange" onchange="updateWalkRatingCard()" class="text-xs border rounded-md p-1 bg-slate-50 text-slate-600 font-medium">
+            <option value="today">Hoje</option>
+            <option value="7days">Últimos 7 dias</option>
+            <option value="30days">Últimos 30 dias</option>
+            <option value="all" selected>Todo o histórico</option>
+          </select>
         </div>
-        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
-          <span class="text-slate-400 font-medium">💦 Xixi</span>
-          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPeeTime">--</span>
+
+        <div id="walkRatingList" class="space-y-1.5 text-xs">
+          <!-- Renderizado via JS -->
         </div>
-        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col">
-          <span class="text-slate-400 font-medium">💩 Cocô</span>
-          <span class="text-sm font-bold text-slate-700 mt-0.5" id="lastPoopTime">--</span>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <!-- Formulário Dinâmico -->
     <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -115,25 +137,50 @@
       </div>
     </section>
 
-    <!-- Relatório Diário -->
-    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-      <div class="flex flex-col gap-3 mb-4">
-        <div class="flex justify-between items-center">
-          <h2 class="text-lg font-bold flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-indigo-600"></i> Relatório Diário
-          </h2>
-          <input type="date" id="reportDate" onchange="loadReport()" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
-        </div>
-
-        <!-- Filtro por Pet no Relatório -->
-        <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
-          <button onclick="setReportFilter('todos')" id="filter-todos" class="filter-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Todos</button>
-          <button onclick="setReportFilter('Luck')" id="filter-Luck" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐶 Luck</button>
-          <button onclick="setReportFilter('Blue e Penélope')" id="filter-Blue-Penelope" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Blue e Penélope</button>
-        </div>
+    <!-- Relatório com Filtros Expandidos -->
+    <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-indigo-600"></i> Relatório
+        </h2>
+        <input type="date" id="reportDate" onchange="setPeriodFilter('custom')" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
       </div>
 
-      <div id="reportList" class="space-y-3">
+      <!-- Filtro de Período (Hoje, 1 Dia, Todo o Histórico) -->
+      <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
+        <button onclick="setPeriodFilter('today')" id="period-today" class="period-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Hoje</button>
+        <button onclick="setPeriodFilter('1day')" id="period-1day" class="period-btn flex-1 py-1 rounded text-center text-slate-600">Ontem e Hoje</button>
+        <button onclick="setPeriodFilter('all')" id="period-all" class="period-btn flex-1 py-1 rounded text-center text-slate-600">Todo Histórico</button>
+      </div>
+
+      <!-- Filtro de Perfil -->
+      <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
+        <button onclick="setReportFilter('todos')" id="filter-todos" class="filter-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Todos</button>
+        <button onclick="setReportFilter('Luck')" id="filter-Luck" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐶 Luck</button>
+        <button onclick="setReportFilter('Blue e Penélope')" id="filter-Blue-Penelope" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Gatos</button>
+      </div>
+
+      <!-- Filtro de Categoria -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtrar Categoria</label>
+        <select id="categoryFilter" onchange="renderReportView()" class="w-full p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700">
+          <option value="todas">Todas as Categoria</option>
+          <option value="Passeio">🦮 Passeio</option>
+          <option value="Xixi">💦 Xixi</option>
+          <option value="Cocô">💩 Cocô</option>
+          <option value="Comida">🍖 Comida</option>
+          <option value="Medicamento">💊 Medicamento</option>
+          <option value="Caixinha">🪨 Caixinha de Areia</option>
+        </select>
+      </div>
+
+      <!-- Indicador de filtro ativo por nota (oculto por padrão) -->
+      <div id="ratingFilterBadge" class="hidden flex justify-between items-center bg-amber-50 border border-amber-200 p-2 rounded-lg text-xs text-amber-900">
+        <span id="ratingFilterText">Filtrando passeios por nota...</span>
+        <button onclick="clearRatingFilter()" class="text-amber-700 font-bold hover:underline">Remover</button>
+      </div>
+
+      <div id="reportList" class="space-y-3 pt-2">
         <p class="text-center text-slate-400 text-sm py-4">Carregando dados...</p>
       </div>
     </section>
@@ -151,7 +198,11 @@
     let selectedRating = 5;
     const DOG_DAILY_FOOD_GOAL_SCOOPS = 6;
     let dailyRecords = [];
+    
+    // Filtros de Relatório
     let currentFilter = 'todos';
+    let currentPeriodMode = 'today'; // 'today', '1day', 'all', 'custom'
+    let selectedRatingFilter = null; // null ou 1, 2, 3, 4, 5
 
     // Inicialização
     document.addEventListener("DOMContentLoaded", () => {
@@ -185,7 +236,7 @@
           <option value="Comida">🍖 Comida</option>
         `;
         document.getElementById('dogFoodGoalSection').classList.remove('hidden');
-        document.getElementById('dogActivitiesTracker').classList.remove('hidden');
+        document.getElementById('dogSectionContainer').classList.remove('hidden');
         document.getElementById('catLitterBoxSection').classList.add('hidden');
       } else {
         select.innerHTML = `
@@ -194,7 +245,7 @@
           <option value="Medicamento">💊 Medicamento</option>
         `;
         document.getElementById('dogFoodGoalSection').classList.add('hidden');
-        document.getElementById('dogActivitiesTracker').classList.add('hidden');
+        document.getElementById('dogSectionContainer').classList.add('hidden');
         document.getElementById('catLitterBoxSection').classList.remove('hidden');
       }
 
@@ -381,7 +432,30 @@
       }
     }
 
-    // Filtros do relatório
+    // Filtro por Período (Hoje, 1 Dia, Todo Histórico)
+    function setPeriodFilter(mode) {
+      currentPeriodMode = mode;
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+        btn.classList.add('text-slate-600');
+      });
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (mode === 'today') {
+        document.getElementById('reportDate').value = todayStr;
+        document.getElementById('period-today').classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      } else if (mode === '1day') {
+        document.getElementById('reportDate').value = todayStr;
+        document.getElementById('period-1day').classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      } else if (mode === 'all') {
+        document.getElementById('period-all').classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      }
+
+      renderReportView();
+    }
+
+    // Filtros por Perfil no Relatório
     function setReportFilter(petName) {
       currentFilter = petName;
       document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -397,16 +471,50 @@
       renderReportView();
     }
 
+    // Filtrar passeios por nota a partir do card
+    function filterWalksByRating(rating) {
+      selectedRatingFilter = rating;
+      document.getElementById('categoryFilter').value = 'Passeio';
+      document.getElementById('ratingFilterBadge').classList.remove('hidden');
+      document.getElementById('ratingFilterText').innerText = `Filtrando Passeios: Nota ${rating} ★`;
+      renderReportView();
+    }
+
+    function clearRatingFilter() {
+      selectedRatingFilter = null;
+      document.getElementById('ratingFilterBadge').classList.add('hidden');
+      renderReportView();
+    }
+
     // Renderizar registros do relatório
     function renderReportView() {
       const selectedDate = document.getElementById('reportDate').value;
+      const categoryFilter = document.getElementById('categoryFilter').value;
       const container = document.getElementById('reportList');
 
+      const today = new Date();
+      const selectedDateTime = new Date(selectedDate + 'T23:59:59');
+      const yesterdayDateTime = new Date(selectedDateTime);
+      yesterdayDateTime.setDate(yesterdayDateTime.getDate() - 1);
+      yesterdayDateTime.setHours(0,0,0,0);
+
       const filtered = dailyRecords.filter(item => {
-        const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
-        const matchDate = itemDate === selectedDate;
-        
-        // Compatibilidade com registros legados ("Blue" ou "Penélope" isolados)
+        const itemDateStr = item.DataHora.split('T')[0];
+        const itemDate = new Date(item.DataHora);
+
+        // 1. Filtro de Data / Período
+        let matchDate = true;
+        if (currentPeriodMode === 'today') {
+          matchDate = itemDateStr === selectedDate;
+        } else if (currentPeriodMode === '1day') {
+          matchDate = itemDate >= yesterdayDateTime && itemDate <= selectedDateTime;
+        } else if (currentPeriodMode === 'custom') {
+          matchDate = itemDateStr === selectedDate;
+        } else if (currentPeriodMode === 'all') {
+          matchDate = true;
+        }
+
+        // 2. Filtro de Perfil
         let matchPet = currentFilter === 'todos';
         if (!matchPet) {
           if (currentFilter === 'Luck') {
@@ -415,11 +523,23 @@
             matchPet = item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope';
           }
         }
-        return matchDate && matchPet;
+
+        // 3. Filtro de Categoria
+        let matchCategory = categoryFilter === 'todas' || item.Atividade === categoryFilter;
+
+        // 4. Filtro Específico por Nota de Passeio
+        let matchRating = true;
+        if (selectedRatingFilter !== null && item.Atividade === 'Passeio') {
+          let det = {};
+          try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+          matchRating = Number(det.comportamento) === selectedRatingFilter;
+        }
+
+        return matchDate && matchPet && matchCategory && matchRating;
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">Nenhum registro encontrado para este filtro.</p>`;
+        container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">Nenhum registro encontrado para os filtros selecionados.</p>`;
         return;
       }
 
@@ -431,7 +551,7 @@
         let badgeStyle = 'bg-indigo-100 text-indigo-700';
 
         if (item.Atividade === 'Passeio') {
-          extraInfo = `Intensidade: <b>${det.intensidade}</b> | Nota: <b>${'★'.repeat(det.comportamento || 0)}</b>`;
+          extraInfo = `Intensidade: <b>${det.intensidade}</b> | Nota: <b class="text-amber-600">${'★'.repeat(det.comportamento || 0)}</b>`;
         } else if (item.Atividade === 'Xixi' || item.Atividade === 'Cocô') {
           extraInfo = `Quantidade: <b>${det.quantidade}</b>`;
         } else if (item.Atividade === 'Comida') {
@@ -443,7 +563,8 @@
           extraInfo = `Ação: <b>${det.status}</b>`;
         }
 
-        const petBadge = item.Pet === 'Luck' ? '🐶 Luck' : '🐱 Blue e Penélope';
+        const petBadge = item.Pet === 'Luck' ? '🐶 Luck' : '🐱 Gatos';
+        const formattedDate = new Date(item.DataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
         return `
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
@@ -451,7 +572,7 @@
               <div class="flex items-center gap-2 mb-1">
                 <span class="font-bold text-slate-700">${petBadge}</span>
                 <span class="${badgeStyle} px-2 py-0.5 rounded">${item.Atividade}</span>
-                <span class="text-slate-400">${det.horario || ''}</span>
+                <span class="text-slate-400">${formattedDate} - ${det.horario || ''}</span>
               </div>
               <div class="text-slate-600">${extraInfo}</div>
             </div>
@@ -460,11 +581,68 @@
       }).join('');
     }
 
-    // Atualizador geral
+    // Atualizador Geral
     function updateDashboardData() {
       updateFoodGoalTracker();
       updateDogActivityTimers();
       updateCatLitterStatus();
+      updateWalkRatingCard();
+    }
+
+    // Atualiza Card de Avaliação dos Passeios do Luck
+    function updateWalkRatingCard() {
+      const range = document.getElementById('walkRatingRange').value;
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let totalWalks = 0;
+
+      dailyRecords.forEach(item => {
+        if (item.Pet === 'Luck' && item.Atividade === 'Passeio') {
+          const itemDate = new Date(item.DataHora);
+          const itemDateStr = item.DataHora.split('T')[0];
+
+          let include = false;
+          if (range === 'today') {
+            include = itemDateStr === todayStr;
+          } else if (range === '7days') {
+            const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24);
+            include = diffDays <= 7;
+          } else if (range === '30days') {
+            const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24);
+            include = diffDays <= 30;
+          } else if (range === 'all') {
+            include = true;
+          }
+
+          if (include) {
+            let det = {};
+            try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
+            const rating = Number(det.comportamento);
+            if (rating >= 1 && rating <= 5) {
+              counts[rating]++;
+              totalWalks++;
+            }
+          }
+        }
+      });
+
+      const listContainer = document.getElementById('walkRatingList');
+      listContainer.innerHTML = [5, 4, 3, 2, 1].map(stars => {
+        const qty = counts[stars];
+        const percent = totalWalks > 0 ? Math.round((qty / totalWalks) * 100) : 0;
+        
+        return `
+          <div onclick="filterWalksByRating(${stars})" class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded transition-all">
+            <span class="w-12 font-bold text-amber-600 flex items-center gap-1">${stars} ★</span>
+            <div class="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-amber-500 h-2.5 rounded-full" style="width: ${percent}%"></div>
+            </div>
+            <span class="w-12 text-right text-slate-500 font-semibold">${qty} <span class="text-[10px] text-slate-400">(${percent}%)</span></span>
+          </div>
+        `;
+      }).join('');
     }
 
     // Progresso de Ração em Medidores (Luck)
@@ -544,7 +722,6 @@
       const card = document.getElementById('catLitterBoxSection');
       document.getElementById('catLitterTitle').innerText = `Caixinha de Areia (Blue e Penélope)`;
 
-      // Busca o registro mais recente (incluindo dados antigos de "Blue" ou "Penélope" se existirem)
       const lastLitterRecord = dailyRecords.find(item => 
         (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope') && item.Atividade === 'Caixinha'
       );
