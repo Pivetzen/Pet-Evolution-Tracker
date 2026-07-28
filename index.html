@@ -181,7 +181,7 @@
       <div>
         <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Filtrar Categoria</label>
         <select id="categoryFilter" onchange="renderReportView()" class="w-full p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700">
-          <option value="todas">Todas as Categoria</option>
+          <option value="todas">Todas as Categorias</option>
           <option value="Passeio">🦮 Passeio</option>
           <option value="Xixi">💦 Xixi</option>
           <option value="Cocô">💩 Cocô</option>
@@ -449,6 +449,32 @@
       }
     }
 
+    // Excluir Lançamento
+    async function deleteRecord(dataHoraIso) {
+      const confirmDelete = confirm("Tem certeza que deseja excluir este lançamento?");
+      if (!confirmDelete) return;
+
+      try {
+        // Envia comando para exclusão via Google Apps Script
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'deletar',
+            DataHora: dataHoraIso
+          })
+        });
+
+        // Remove localmente
+        dailyRecords = dailyRecords.filter(item => item.DataHora !== dataHoraIso);
+        renderReportView();
+        updateDashboardData();
+      } catch (err) {
+        alert("Erro ao tentar excluir o registro.");
+      }
+    }
+
     // Filtro por Período
     function setPeriodFilter(mode) {
       currentPeriodMode = mode;
@@ -580,14 +606,17 @@
 
         return `
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
-            <div>
-              <div class="flex items-center gap-2 mb-1">
+            <div class="pr-2">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
                 <span class="font-bold text-slate-700">${petBadge}</span>
                 <span class="${badgeStyle} px-2 py-0.5 rounded">${item.Atividade}</span>
                 <span class="text-slate-400">${formattedDate} - ${det.horario || ''}</span>
               </div>
               <div class="text-slate-600">${extraInfo}</div>
             </div>
+            <button onclick="deleteRecord('${item.DataHora}')" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Excluir Lançamento">
+              <i class="fa-solid fa-trash-can text-sm"></i>
+            </button>
           </div>
         `;
       }).join('');
@@ -733,9 +762,7 @@
 
       const now = new Date();
 
-      // =========================================
       // 1. CARD DE COLETA DE RESÍDUOS
-      // =========================================
       const cardResidues = document.getElementById('catLitterBoxSection');
       const lastResidueRecord = dailyRecords.find(item => {
         const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
@@ -770,9 +797,7 @@
         }
       }
 
-      // =========================================
       // 2. CARD DE LIMPEZA COMPLETA (TROCA DE AREIA)
-      // =========================================
       const cardFullClean = document.getElementById('catFullCleanSection');
       const lastFullRecord = dailyRecords.find(item => {
         const isCat = (item.Pet === 'Blue e Penélope' || item.Pet === 'Blue' || item.Pet === 'Penélope');
@@ -796,8 +821,6 @@
         document.getElementById('catFullCleanLastDate').innerText = recDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         document.getElementById('catFullCleanLastHour').innerText = recDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-        // Regras do Card da Limpeza Completa por dias:
-        // Amarelo para 3 dias, Laranja para 4 dias, Vermelho para 6 dias
         if (daysAgo >= 6) {
           cardFullClean.className = "rounded-xl p-4 shadow-md border bg-red-600 text-white border-red-700 animate-pulse";
         } else if (daysAgo >= 4) {
