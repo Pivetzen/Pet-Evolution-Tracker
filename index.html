@@ -81,11 +81,21 @@
 
     <!-- Relatório Diário -->
     <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold flex items-center gap-2">
-          <i class="fa-solid fa-chart-line text-indigo-600"></i> Relatório Diário
-        </h2>
-        <input type="date" id="reportDate" onchange="loadReport()" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
+      <div class="flex flex-col gap-3 mb-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-indigo-600"></i> Relatório Diário
+          </h2>
+          <input type="date" id="reportDate" onchange="loadReport()" class="text-xs border rounded-lg p-1.5 bg-slate-50 font-medium">
+        </div>
+
+        <!-- Filtro por Pet no Relatório -->
+        <div class="flex gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium">
+          <button onclick="setReportFilter('todos')" id="filter-todos" class="filter-btn flex-1 py-1 rounded text-center bg-white shadow-sm text-indigo-600 font-bold">Todos</button>
+          <button onclick="setReportFilter('Luck')" id="filter-Luck" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐶 Luck</button>
+          <button onclick="setReportFilter('Blue')" id="filter-Blue" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Blue</button>
+          <button onclick="setReportFilter('Penélope')" id="filter-Penélope" class="filter-btn flex-1 py-1 rounded text-center text-slate-600">🐱 Penélope</button>
+        </div>
       </div>
 
       <div id="reportList" class="space-y-3">
@@ -106,6 +116,7 @@
     let selectedRating = 5;
     const DOG_DAILY_FOOD_GOAL = 400; // Meta em gramas
     let dailyRecords = [];
+    let currentFilter = 'todos';
 
     // Inicialização
     document.addEventListener("DOMContentLoaded", () => {
@@ -114,7 +125,7 @@
       loadReport();
     });
 
-    // Seleção do Pet
+    // Seleção do Pet no Formulário
     function selectPet(name, type) {
       currentPet = { name, type };
       
@@ -128,7 +139,7 @@
 
       document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-indigo-600"></i> Registrar: ${name}`;
       
-      // Ajusta opçoes do select de atividade
+      // Ajusta opções do select de atividade
       const select = document.getElementById('activityType');
       if (type === 'dog') {
         select.innerHTML = `
@@ -315,8 +326,23 @@
         renderReportView();
         updateFoodGoalTracker();
       } catch (err) {
-        container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Insira a URL do Apps Script para carregar os dados.</p>`;
+        container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">Erro ao carregar os dados do Google Sheets.</p>`;
       }
+    }
+
+    // Filtros de visualização do relatório
+    function setReportFilter(petName) {
+      currentFilter = petName;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+        btn.classList.add('text-slate-600');
+      });
+
+      const activeFilterBtn = document.getElementById(`filter-${petName}`);
+      activeFilterBtn.classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      activeFilterBtn.classList.remove('text-slate-600');
+
+      renderReportView();
     }
 
     // Renderizar a visualização dos registros
@@ -326,11 +352,13 @@
 
       const filtered = dailyRecords.filter(item => {
         const itemDate = new Date(item.DataHora).toISOString().split('T')[0];
-        return itemDate === selectedDate;
+        const matchDate = itemDate === selectedDate;
+        const matchPet = currentFilter === 'todos' || item.Pet === currentFilter;
+        return matchDate && matchPet;
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">Nenhum registro encontrado para esta data.</p>`;
+        container.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">Nenhum registro encontrado para este filtro.</p>`;
         return;
       }
 
@@ -339,6 +367,8 @@
         try { det = typeof item.Detalhes === 'string' ? JSON.parse(item.Detalhes) : item.Detalhes; } catch(e){}
 
         let extraInfo = '';
+        let badgeStyle = 'bg-indigo-100 text-indigo-700';
+
         if (item.Atividade === 'Passeio') {
           extraInfo = `Intensidade: <b>${det.intensidade}</b> | Nota: <b>${'★'.repeat(det.comportamento || 0)}</b>`;
         } else if (item.Atividade === 'Xixi' || item.Atividade === 'Cocô') {
@@ -346,7 +376,8 @@
         } else if (item.Atividade === 'Comida') {
           extraInfo = `Porção: <b>${det.quantidadeGrams}g</b>`;
         } else if (item.Atividade === 'Medicamento') {
-          extraInfo = `Remédio: <b>${det.nomeMedicamento}</b> ${det.observacao ? `(${det.observacao})` : ''}`;
+          badgeStyle = 'bg-red-100 text-red-700 font-bold'; // Destaque para remédios
+          extraInfo = `Remédio: <b>${det.nomeMedicamento}</b> ${det.observacao ? `<span class="text-red-600">(${det.observacao})</span>` : ''}`;
         } else if (item.Atividade === 'Caixinha') {
           extraInfo = `Ação: <b>${det.status}</b>`;
         }
@@ -358,7 +389,7 @@
             <div>
               <div class="flex items-center gap-2 mb-1">
                 <span class="font-bold text-slate-700">${petBadge}</span>
-                <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-semibold">${item.Atividade}</span>
+                <span class="${badgeStyle} px-2 py-0.5 rounded">${item.Atividade}</span>
                 <span class="text-slate-400">${det.horario || ''}</span>
               </div>
               <div class="text-slate-600">${extraInfo}</div>
